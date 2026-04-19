@@ -9,7 +9,12 @@ using GlobalSettings;
 [BepInPlugin("com.NarrowsProjects.ReplenishTools", "Replenish tools over time", "1.0.0")]
 public class ReplenishTools : BaseUnityPlugin
 {
-    private const float RegenIntervalSeconds = 5f;
+    // Straight pin has a capacity of 24 at max pouches and should take 5 seconds to replenish a single pin
+    // Divided by 2 because the mod reduces it's capacity by half.
+    // Higher capacity = faster replenish rate;
+    private const float BaseRegenSeconds = 5f * 24f / 2;
+
+    private readonly Dictionary<string, float> _regenAccumulator = new Dictionary<string, float>();
 
     internal static bool IsRedTool(ToolItem tool) => tool?.Type == ToolItemType.Red;
     internal static bool IsPercentageReplenish(ToolItem tool) => tool?.ReplenishUsage == ToolItem.ReplenishUsages.Percentage;
@@ -28,9 +33,27 @@ public class ReplenishTools : BaseUnityPlugin
         StartCoroutine(RegenLoop());
     }
 
-    internal bool ReplenishTool(ToolItem tool)
+    // Accumulates fractional regen progress for each equiped red tool and returns how many
+    // tools to replenish this tick.
+    private int AccumulateRegen(ToolItem tool, float deltaTime)
     {
-        if (!IsRedTool(tool))
+        int capacity = ToolItemManager.GetToolStorageAmount(tool);
+        float rate = (float)capacity / BaseRegenSeconds;
+
+        if (!_regenAccumulator.TryGetValue(tool.name, out float accumulated))
+        {
+            accumulated = 0f;
+        }
+
+        accumulated += rate * deltaTime;
+        int toolReplenishCount = Mathf.FloorToInt(accumulated);
+        _regenAccumulator[tool.name] = accumulated - toolReplenishCount;
+        return toolReplenishCount;
+    }
+
+    internal bool ReplenishTool(ToolItem tool, int toolReplenishCount)
+    {
+        if (!IsRedTool(tool) || toolReplenishCount <= 0)
         {
             return false;
         }
@@ -40,15 +63,25 @@ public class ReplenishTools : BaseUnityPlugin
 
         if (data.AmountLeft >= capacity)
         {
+            _regenAccumulator[tool.name] = 0f;
             return false;
         }
 
-        DeductReplenishCost(tool);
+        int toAdd = Mathf.Min(toolReplenishCount, capacity - data.AmountLeft);
 
-        data.AmountLeft++;
+        for (int i = 0; i < toAdd; i++)
+        {
+            if (!CanAffordReplenish(tool))
+            {
+                break;
+            }
+
+            DeductReplenishCost(tool);
+            data.AmountLeft++;
+        }
+
         PlayerData.instance.SetToolData(tool.name, data);
         Logger.LogInfo($"[Regen] {tool.name}: {data.AmountLeft}/{capacity}");
-
         return true;
     }
 
@@ -78,36 +111,42 @@ public class ReplenishTools : BaseUnityPlugin
         return Mathf.RoundToInt(baseValue * tool.ReplenishUsageMultiplier);
     }
 
+    internal bool CanAffordReplenish(ToolItem tool)
+    {
+        if (!CurrencyIsDeductable(tool.ReplenishResource))
+        {
+            return true;
+        }
+
+        int cost = ComputeReplenishCost(tool);
+        int currentAmount = CurrencyManager.GetCurrencyAmount((CurrencyType)tool.ReplenishResource);
+        return currentAmount - cost > -0.5f;
+    }
+
     internal void DeductReplenishCost(ToolItem tool)
     {
         int cost = ComputeReplenishCost(tool);
-        ToolItem.ReplenishResources currencyType = tool.ReplenishResource;
-
-        if (CurrencyIsDeductable(currencyType))
+        if (cost > 0 && CurrencyIsDeductable(tool.ReplenishResource))
         {
-            int currentAmount = CurrencyManager.GetCurrencyAmount((CurrencyType)currencyType);
-            
-            if (currentAmount - cost <= -0.5f)
-            {
-                return;
-            }
-        }
-
-        if (cost > 0f && CurrencyIsDeductable(currencyType))
-        {
-            CurrencyManager.TakeCurrency(Mathf.RoundToInt(cost), (CurrencyType)currencyType, showCounter: true);
+            CurrencyManager.TakeCurrency(cost, (CurrencyType)tool.ReplenishResource, showCounter: true);
         }
     }
+
     private IEnumerator RegenLoop()
     {
+        float lastTime = Time.time;
         while (true)
         {
-            yield return new WaitForSeconds(RegenIntervalSeconds);
-            TryRegenRedTools();
+            yield return null;
+            float now = Time.time;
+            float delta = now - lastTime;
+            lastTime = now;
+
+            TryRegenRedTools(delta);
         }
     }
 
-    private void TryRegenRedTools()
+    private void TryRegenRedTools(float deltaTime)
     {
         if (PlayerData.instance == null)
         {
@@ -116,7 +155,6 @@ public class ReplenishTools : BaseUnityPlugin
 
         string crestId = PlayerData.instance.CurrentCrestID;
         List<ToolItem> equippedTools = ToolItemManager.GetEquippedToolsForCrest(crestId);
-
         if (equippedTools == null)
         {
             return;
@@ -126,7 +164,13 @@ public class ReplenishTools : BaseUnityPlugin
 
         foreach (ToolItem tool in equippedTools)
         {
-            anyChanged |= ReplenishTool(tool);
+            if (!IsRedTool(tool))
+            {
+                continue;
+            }
+
+            int toolReplenishCount = AccumulateRegen(tool, deltaTime);
+            anyChanged |= ReplenishTool(tool, toolReplenishCount);
         }
 
         if (anyChanged)
