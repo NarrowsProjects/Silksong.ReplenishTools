@@ -10,7 +10,8 @@ public class ReplenishTools : BaseUnityPlugin
     public void Awake()
     {
         Logger.LogInfo("Loading ReplenishTools mod");
-        Harmony.CreateAndPatchAll(typeof(ReplenishTools), null);
+        Harmony harmony = new Harmony("com.NarrowsProjects.ReplenishTools");
+        harmony.PatchAll();
     }
 
     [HarmonyPatch(typeof(ToolItem), nameof(ToolItem.BaseStorageAmount), MethodType.Getter)]
@@ -19,7 +20,9 @@ public class ReplenishTools : BaseUnityPlugin
         static void Postfix(ToolItem __instance, ref int __result)
         {
             if (__instance.Type == ToolItemType.Red)
-                __result = Mathf.Max(1, __result / 2);
+            {
+                __result = Mathf.Max(1, Mathf.CeilToInt(__result * 0.5f));
+            }
         }
     }
 }
