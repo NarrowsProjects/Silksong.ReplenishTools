@@ -25,6 +25,11 @@ Codebase exploration:
 - `ToolItemManager`
   - Currenly equiped tools can be obtained by calling `ToolItemManager.GetCurrentEquippedTools()`
   - Tools are replenished using `ToolItemManager.TryReplenishTools(bool, ReplenishMethod)` which calls `ToolItem.TryReplenishSingle()` twice
+    - It tracks the current amount of currency (per type) the player has by creating two coppies:
+      - `_endingCurrencyAmounts` (Array<int>)
+      - `_startingCurrencyAmounts` (Array<int>)
+      - Both are set using `CurrencyManager.GetCurrencyAmount(type)`
+      - `_endingCurrencyAmounts` is changed in the function and is subtracted from `_startingCurrencyAmount`. The result is then passed to this method `CurrencyManager.TakeCurrency(int amount, CurrencyType type, bool showCounter = true);`
     - once with `deReplenish` as false (my guess would be to compute if this action is feasible or not. If it is)
     - once with `deReplenish` as false IF the previous one returned true
   - The
