@@ -193,7 +193,7 @@ public class ReplenishTools : BaseUnityPlugin
         }
     }
 
-    [HarmonyPatch(typeof(EnemyHitRegular), nameof(EnemyHitRegular.ReceiveHitEffect))]
+    [HarmonyPatch(typeof(EnemyHitEffectsRegular), nameof(EnemyHitEffectsRegular.ReceiveHitEffect))]
     static class PatchNailHitBoost
     {
         static void Postfix()
