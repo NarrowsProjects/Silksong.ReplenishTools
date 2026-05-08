@@ -14,6 +14,14 @@ public class ReplenishTools : BaseUnityPlugin
     // Higher capacity = faster replenish rate;
     private const float BaseRegenSeconds = 5f * 24f / 2;
 
+    // How long (seconds) a nail hit boosts the regen rate
+    private const float ReplenishBoostDuration = 1.5f;
+    // Multiplier applied to regen rate during the boost window
+    private const float ReplenishBoost = 2f;
+
+    // Shared timestamp set by the Harmony patch when an enemy is struck
+    internal static float BoostEndTime = -1f;
+
     private readonly Dictionary<string, float> _regenAccumulator = new Dictionary<string, float>();
 
     internal static bool IsRedTool(ToolItem tool) => tool?.Type == ToolItemType.Red;
@@ -39,6 +47,11 @@ public class ReplenishTools : BaseUnityPlugin
     {
         int capacity = ToolItemManager.GetToolStorageAmount(tool);
         float rate = (float)capacity / BaseRegenSeconds;
+
+        if (Time.time <= BoostEndTime)
+        {
+            rate *= ReplenishBoost;
+        }
 
         if (!_regenAccumulator.TryGetValue(tool.name, out float accumulated))
         {
@@ -177,6 +190,15 @@ public class ReplenishTools : BaseUnityPlugin
         {
             ToolItemManager.ReportAllBoundAttackToolsUpdated();
             ToolItemManager.SendEquippedChangedEvent(force: true);
+        }
+    }
+
+    [HarmonyPatch(typeof(EnemyHitRegular), nameof(EnemyHitRegular.ReceiveHitEffect))]
+    static class PatchNailHitBoost
+    {
+        static void Postfix()
+        {
+            BoostEndTime = Time.time + ReplenishBoostDuration;
         }
     }
 
