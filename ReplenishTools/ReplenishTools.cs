@@ -33,8 +33,8 @@ public class ReplenishTools : BaseUnityPlugin
         StartCoroutine(RegenLoop());
     }
 
-    // Accumulates fractional regen progress for each equiped red tool and returns how many
-    // tools to replenish this tick.
+    // Accumulates fractional regen progress for each equipped red tool and returns 
+    // by how much (percentage) of a tool should be replenished this tick.
     private int AccumulateRegen(ToolItem tool, float deltaTime)
     {
         int capacity = ToolItemManager.GetToolStorageAmount(tool);
