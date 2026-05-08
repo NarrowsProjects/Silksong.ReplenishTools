@@ -43,6 +43,16 @@ Codebase exploration:
     - So, direction has nothing to do with direction, it is just the magnitude/force with which something (enemy or hornet) is moved. The direction is based on the hit type (sting shard moves towards center of the trap for instance)
   - HitInstance has an internal enum called targetType, which contains the options: `Regular`, `Corpse`, `BouncePod`, `Currency`
   - I can probably trigger the double tool replenishment regeneration by just checking if `EnemyHitRegular.ReceiveHitEffect` has been triggered.
+
+- Ragpelts lag the game when mod is turned on. I have to investigate this.
+  - The logs show erors about applying linear velocity to something.
+  - the class `PersistentEnemyItemDrop` has a function called `DropItem(bool fling)`.
+    - It appears to control the movement of the items
+    - If `fling` is false and `startedDeadSpawnPoint` is true (it needs to be cast to a bool first).
+      - This might be pilgrim shawls as those 'drop' on the pilgrim corpse.
+    - Rag pelts might have `fling` = true as the pelts explode outwards
+  - nothing found regarding linear velocity
+
 The ReplenishMethod enum
 ```
     public enum ReplenishMethod
