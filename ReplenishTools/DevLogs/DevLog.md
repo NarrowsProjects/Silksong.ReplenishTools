@@ -37,8 +37,12 @@ Codebase exploration:
   - Whether replenishment is required is checked based on if the tool is a skill or not or if the `BaseStorageAmount` is greater than 0.
   - Replacement of a tool is canceled if this check rules false:
     - _endingCurrencyAmounts[(int)item.ReplenishResource] - outCost <= -0.5f
-  
 
+- Enemy Interaction
+  - The class `EnemyHitRegular` has the public method called `ReceiveHitEffect`, which creates a new HitInstance instance (object initializer syntax) with a direction (which is a float??) and an attack type. In this case the attack type is generic, which is likely a normal strike with the needle.
+    - So, direction has nothing to do with direction, it is just the magnitude/force with which something (enemy or hornet) is moved. The direction is based on the hit type (sting shard moves towards center of the trap for instance)
+  - HitInstance has an internal enum called targetType, which contains the options: `Regular`, `Corpse`, `BouncePod`, `Currency`
+  - I can probably trigger the double tool replenishment regeneration by just checking if `EnemyHitRegular.ReceiveHitEffect` has been triggered.
 The ReplenishMethod enum
 ```
     public enum ReplenishMethod
