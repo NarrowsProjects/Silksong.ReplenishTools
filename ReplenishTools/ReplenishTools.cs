@@ -2,6 +2,7 @@
 using BepInEx.Logging;
 using HarmonyLib;
 using UnityEngine;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using GlobalSettings;
@@ -193,14 +194,18 @@ public class ReplenishTools : BaseUnityPlugin
         }
     }
 
-    [HarmonyPatch(typeof(EnemyHitEffectsRegular), nameof(EnemyHitEffectsRegular.ReceiveHitEffect))]
-    static class PatchNailHitBoost
+[HarmonyPatch(
+    typeof(EnemyHitEffectsRegular),
+    nameof(EnemyHitEffectsRegular.ReceiveHitEffect),
+    new Type[] { typeof(HitInstance), typeof(Vector2) }
+    )]
+static class PatchNailHitBoost
+{
+    static void Postfix()
     {
-        static void Postfix()
-        {
-            BoostEndTime = Time.time + ReplenishBoostDuration;
-        }
+        BoostEndTime = Time.time + ReplenishBoostDuration;
     }
+}
 
     [HarmonyPatch(typeof(ToolItem), nameof(ToolItem.BaseStorageAmount), MethodType.Getter)]
     static class PatchToolCapacity
