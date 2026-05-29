@@ -10,10 +10,10 @@ using GlobalSettings;
 [BepInPlugin("com.NarrowsProjects.ReplenishTools", "Replenish tools over time", "1.0.0")]
 public class ReplenishTools : BaseUnityPlugin
 {
-    // Straight pin has a capacity of 24 at max pouches and should take 5 seconds to replenish a single pin
+    // Straight pin has a capacity of 24 at max pouches and should take 7.5 seconds to replenish a single pin
     // Divided by 2 because the mod reduces it's capacity by half.
     // Higher capacity = faster replenish rate;
-    private const float BaseRegenSeconds = 5f * 24f / 2;
+    private const float BaseRegenSeconds = 7.5f * 24f / 2;
 
     // How long (seconds) a nail hit boosts the regen rate
     private const float ReplenishBoostDuration = 1.5f;
@@ -194,18 +194,18 @@ public class ReplenishTools : BaseUnityPlugin
         }
     }
 
-[HarmonyPatch(
-    typeof(EnemyHitEffectsRegular),
-    nameof(EnemyHitEffectsRegular.ReceiveHitEffect),
-    new Type[] { typeof(HitInstance), typeof(Vector2) }
-    )]
-static class PatchNailHitBoost
-{
-    static void Postfix()
+    [HarmonyPatch(
+        typeof(EnemyHitEffectsRegular),
+        nameof(EnemyHitEffectsRegular.ReceiveHitEffect),
+        new Type[] { typeof(HitInstance), typeof(Vector2) }
+        )]
+    static class PatchNailHitBoost
     {
-        BoostEndTime = Time.time + ReplenishBoostDuration;
+        static void Postfix()
+        {
+            BoostEndTime = Time.time + ReplenishBoostDuration;
+        }
     }
-}
 
     [HarmonyPatch(typeof(ToolItem), nameof(ToolItem.BaseStorageAmount), MethodType.Getter)]
     static class PatchToolCapacity
