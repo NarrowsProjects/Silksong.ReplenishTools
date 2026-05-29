@@ -1,9 +1,9 @@
 Goals: 
-- Regenerate the number of red tools over time
-  - The regeneration speed should be based on the total tool capacity (straight pin will regenerate multiple times faster than the pimpilo)
+- ~~Regenerate the number of red tools over time~~
+  - ~~The regeneration speed should be based on the total tool capacity (straight pin will regenerate multiple times faster than the pimpilo)~~
 - ~~Decrease the red tool capacity by half across all red-tools~~
   - ~~Completed, with the caviat of the cost of all tools being doubled~~
-- (Optional) Double tool replenishment speed after hitting an enemy for the next 1.5s
+- ~~(Optional) Double tool replenishment speed after hitting an enemy for the next 1.5s~~
 
 Codebase exploration:
 - `ToolItem`:
@@ -50,8 +50,14 @@ Codebase exploration:
     - It appears to control the movement of the items
     - If `fling` is false and `startedDeadSpawnPoint` is true (it needs to be cast to a bool first).
       - This might be pilgrim shawls as those 'drop' on the pilgrim corpse.
+      - The pilgrim shawl could also just be `CorpseItems`
     - Rag pelts might have `fling` = true as the pelts explode outwards
   - nothing found regarding linear velocity
+  - Lag clears if switching screen.
+    - Potentially worth looking into the game
+  - Lag only occurs once hornet picks up the ragpelts
+    - There's a field in `ToolItemsManager` called `ToolItems`.
+      - Could be used to check if ragpelts are in there.
 
 The ReplenishMethod enum
 ```
