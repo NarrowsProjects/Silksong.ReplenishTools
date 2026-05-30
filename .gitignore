@@ -1,3 +1,6 @@
 .vs/
 ReplenishTools/bin/
-ReplenishTools/obj/
+ReplenishTools/obj/Debug
+ReplenishTools/obj/Release/*.csproj**
+ReplenishTools/obj/Release/*.AssemblyAttributes**
+ReplenishTools/obj/Release/*.Up2Date
