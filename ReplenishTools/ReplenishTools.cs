@@ -140,7 +140,10 @@ public class ReplenishTools : BaseUnityPlugin
     internal void DeductReplenishCost(ToolItem tool)
     {
         int cost = ComputeReplenishCost(tool);
-        if (cost > 0 && CurrencyIsDeductable(tool.ReplenishResource))
+
+        if (cost <= 0) return; 
+
+        if (CurrencyIsDeductable(tool.ReplenishResource))
         {
             CurrencyManager.TakeCurrency(cost, (CurrencyType)tool.ReplenishResource, showCounter: true);
         }
@@ -190,7 +193,6 @@ public class ReplenishTools : BaseUnityPlugin
         if (anyChanged)
         {
             ToolItemManager.ReportAllBoundAttackToolsUpdated();
-            ToolItemManager.SendEquippedChangedEvent(force: true);
         }
     }
 
