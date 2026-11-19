@@ -59,6 +59,24 @@ Codebase exploration:
     - There's a field in `ToolItemsManager` called `ToolItems`.
       - Could be used to check if ragpelts are in there.
 
+- A user picked-up a bug in the mod where the refill causes focus and reaper crest bind state to cancel upon tool replenish.
+  - This is likely due to the fact that the replenish mechanism is similar to siting down on a bench (which undoes both these states).
+  - This would presumably also get rid of the fury state of the beast crest.
+  - My guess is that it it probably happening during the `PlayerData.SetToolData()` call
+    - False, after commenting out the line, focus is still broken upon refresh.
+  - Checking if this is an issue of the `ReplenishTool()` function by simply commenting it out everything except for the return `true` statement
+    - Focus no longer builds despite the fact that the tools aren't being replenished anymore
+      - This means that the issue lies with either:
+        - `ToolItemManager.ReportAllBoundAttackToolsUpdated()`
+        - `ToolItemManager.SendEquippedChangedEvent()`
+      - After a comment-out test, it appears that the issue was `SendEquippedChangedEvent`
+    - `ToolItemManager` has a `public static Action` called `OnEquippedStateChanged`. I'm guessing this is defined in the unity editor as I cannot read what is assigned to it.
+
+    - I guess the reason why it's included in the original tool restore (whilst sitting on a bench) is because changing tools while on a bench should also trigger the tool craft effect.
+    - I should not have included that in the original function then, oversight on my end.
+
+      
+
 The ReplenishMethod enum
 ```
     public enum ReplenishMethod
